@@ -1,4 +1,8 @@
 #include <M5Atom.h>
+#include <Adafruit_SHT31.h>
+#include <Wire.h>
+
+Adafruit_SHT31 sht3x = Adafruit_SHT31(&Wire);
 
 const long ledColor[]={
   0x008000,// R
@@ -9,8 +13,11 @@ const long ledColor[]={
 
 void setup() {
   // put your setup code here, to run once:
-  M5.begin(false, false, true);// Serial, I2C, Display
-
+  M5.begin(true, false, true);// Serial, I2C, Display
+  Wire.begin(26, 32, 100000);
+  if (!sht3x.begin(0x44)) {
+    Serial.println("ENV2: Could not find a valid SHT3X sensor, check wiring!");
+  }
   if(esp_sleep_get_wakeup_cause() == ESP_SLEEP_WAKEUP_EXT0) {// deepSleep後の復帰かどうか
     M5.dis.drawpix(0, ledColor[0]);// R
     while(1) {
@@ -41,5 +48,8 @@ void loop() {
   } else if (M5.Btn.wasPressed()) {
     M5.dis.drawpix(0, ledColor[2]);// B
   }
-  delay(10);
+  float tmp = sht3x.readTemperature();
+  float hum = sht3x.readHumidity();
+  Serial.printf("Temp: %2.2f*C Humi: %0.2f%%\r\n", tmp, hum);
+  delay(100);
 }
